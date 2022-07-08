@@ -1,0 +1,124 @@
+public with sharing class ApexAcademyClass {
+    
+    public static void AdicionandoContinentes(){
+
+        List<Continente__c> ctnt = new List<Continente__c>{
+            new Continente__c (Name = 'Ásia'),
+            new Continente__c (Name = 'Oceania'),
+            new Continente__c (Name = 'África'),
+            new Continente__c (Name = 'Europa'),
+            new Continente__c (Name = 'América do Norte'),
+            new Continente__c (Name = 'América do Sul')
+        };
+        
+        Database.SaveResult[] resultado = Database.insert(ctnt, false);
+
+        List<Logs__c> logs = new List<Logs__c>();
+        String descricao = '';
+        for(Database.SaveResult res : resultado){
+            if(res.isSuccess()){
+                descricao = 'Operação realizada com sucesso! Id: '+res.getId();
+                Logs__c sucesso = new Logs__c(Descricao__c = descricao);
+                logs.add(sucesso);
+            }else{
+                for(Database.Error error : res.getErrors()){
+                    descricao = 'O seguinte erro ocorreu: '+ error.getStatusCode() +
+                     ' : '+error.getMessage()+ ', Campos afetados: '+error.getFields();
+                    Logs__c problema = new Logs__c(Descricao__c = descricao);
+                    logs.add(problema);
+                }
+
+            }
+        }   Database.insert(logs, false);
+            
+    }
+
+    public static void AdicionandoPaises(){
+        List<Continente__c> cont = new List<Continente__c>([SELECT Id, Name FROM Continente__c]);
+            Id idCont;
+            for(Continente__c c : cont){
+                if(c.Name == 'América do Sul'){
+                 idCont = c.Id; }
+                 }
+    
+        List<Pais__c> pais = new List<Pais__c>{
+            
+            //new Pais__c (Name = 'Brasil', Sigla__c = 'BR', Continente__c = idCont),
+            new Pais__c (Name = 'Argentina', Sigla__c = 'AR', Continente__c = idCont),
+            new Pais__c (Name = 'Colômbia', Sigla__c = 'CO', Continente__c = idCont),
+            new Pais__c (Name = 'Bolívia', Sigla__c = 'BO', Continente__c = idCont),
+            //new Pais__c (Name = 'Chile'),
+            new Pais__c (Name = 'Uruguai', Sigla__c = 'UR', Continente__c = idCont),
+            new Pais__c (Name = 'Venezuela', Sigla__c = 'VE', Continente__c = idCont),
+            //new Pais__c (Name = 'Suriname', Continente__c = idCont),
+            new Pais__c (Name = 'Peru', Sigla__c = 'PE', Continente__c = idCont),
+            new Pais__c (Name = 'Paraguai', Sigla__c = 'PA', Continente__c = idCont)
+            //new Pais__c (Name = 'Equador')
+        };
+        Savepoint sp = Database.setSavepoint();
+        Database.SaveResult[] sr = Database.insert(pais, false);
+        System.debug([SELECT Id, Name FROM Pais__c]);
+        List<Logs__c> logs = new List<Logs__c>();
+        String descricao = '';
+        Boolean rb = FALSE;
+
+        for(Database.SaveResult result : sr){
+            if(result.isSuccess()){
+                descricao = 'Operação realizada com sucesso! Id: '+result.getId();
+                Logs__c sucesso = new Logs__c(Descricao__c = descricao);
+                logs.add(sucesso);
+            }else{
+                for(Database.Error erro : result.getErrors()){
+                    descricao = 'O seguinte erro ocorreu: '+erro.getStatusCode()+' : '
+                    +erro.getMessage()+', Campos afetados: '+erro.getFields();
+                    Logs__c fracasso = new Logs__c(Descricao__c = descricao);
+                    logs.add(fracasso);
+                    rb = TRUE;
+                }
+            }
+        } if(rb == FALSE){
+            Database.insert(logs, false);
+        }else{
+            System.debug('Algum registro está sendo inserido de forma incorreta!');
+            Database.rollback(sp);
+            System.debug([SELECT Id, Name FROM Pais__c]);
+        }
+
+    }
+
+    public static void AdicionandoCidades(){
+        List<Pais__C> pais = new List<Pais__c>([SELECT Id, Name FROM Pais__c]);
+        Id idPais;
+            for(Pais__c p : pais){
+                if(p.Name == 'Brasil'){
+                    idPais = p.Id;
+                }
+            }
+        List<Cidade__c> cidade = new List<Cidade__c>{
+                new Cidade__c (Name= 'Rio de Janeiro', Pais__c= idPais),
+                new Cidade__c (Name= 'São Paulo', Pais__c= idPais),
+                new Cidade__c (Name= 'Minas Gerais', Pais__c= idPais),
+                new Cidade__c (Name= 'Curitiba', Pais__c= idPais)
+        };
+
+        List<Logs__c> logs = new List<Logs__c>();
+        String descricao;
+        Database.SaveResult[] sr = Database.insert(cidade, false);
+        for(Database.SaveResult res : sr){
+            if(res.isSuccess()){
+                descricao = 'Sucesso na inserção! Id:'+res.getId();
+                Logs__c sucesso = new Logs__c(Descricao__c = descricao);
+                logs.add(sucesso);
+            }else{
+                for(Database.Error e : res.getErrors()){
+                    descricao = 'Erro: '+e.getStatusCode()+' - '+e.getMessage()+', no Campo: '+e.getFields();
+                    Logs__c erro = new Logs__c(Descricao__c = descricao);
+                    logs.add(erro);
+                }
+
+            }
+        }   Database.insert(logs,false);
+
+    }
+
+}
